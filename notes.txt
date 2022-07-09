@@ -1,0 +1,7 @@
+initTasks: [
+  { task: 'programming', endTime: 0, startTime: 2533 },
+  { task: 'russian', endTime: 2534, startTime: 5067 },
+  { task: 'self help', endTime: 5068, startTime: 7601 },
+  { task: 'finance', endTime: 7602, startTime: 10135 },
+  { task: 'exercise', endTime: 10136, startTime: 12669 }
+]
