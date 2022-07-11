@@ -15,13 +15,39 @@ function App() {
     loading: true,
   });
 
-  const pause = (counter: number): void => {
-    console.log("I am paused at : ", counter);
+  const fetchData = async () => {
+    const result = await fetch("/getRoutine");
+    const data = await result.json();
+    setData({
+      paused: data.paused,
+      currentTask: data.currentTask,
+      loading: false,
+    });
+  };
+
+  const pauseData = async () => {
+    const result = await fetch("/pause");
+    const json = await result.json();
+    setData({ ...data, paused: json.paused });
+  };
+
+  const startData = async () => {
+    const result = await fetch("/start");
+    const json = await result.json();
+    setData({
+      paused: json.paused,
+      currentTask: json.currentTask,
+      loading: false,
+    });
+  };
+
+  const pause = (): void => {
     setData({
       paused: true,
       currentTask: { ...data.currentTask },
       loading: false,
     });
+    pauseData();
   };
 
   const start = (): void => {
@@ -30,23 +56,19 @@ function App() {
       currentTask: { ...data.currentTask },
       loading: false,
     });
-    console.log("Started");
+    startData();
+  };
+
+  const taskFinished = (): void => {
+    console.log("Task finished");
+    fetchData();
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await fetch("/getRoutine");
-      const data = await result.json();
-      setData({
-        paused: data.paused,
-        currentTask: data.currentTask,
-        loading: false,
-      });
-    };
     fetchData();
   }, []);
 
-  console.log("data: ", data);
+  // console.log("data: ", data);
   return (
     <div className="App">
       <header className="App-header">
@@ -54,14 +76,18 @@ function App() {
           <p>Loading...</p>
         ) : (
           <div>
+            {data.paused && <button onClick={() => start()}>Start</button>}
+            {!data.paused && <button onClick={() => pause()}>Pause</button>}
             <h3>{data.currentTask.task}</h3>
-            <Countdown
-              time={data.currentTask.time}
-              task={data.currentTask.task}
-              pause={pause}
-              start={start}
-              paused={data.paused}
-            />
+            {data.paused ? (
+              <p>Paused</p>
+            ) : (
+              <Countdown
+                time={data.currentTask.time}
+                task={data.currentTask.task}
+                taskFinished={taskFinished}
+              />
+            )}
           </div>
         )}
       </header>

@@ -20,7 +20,7 @@ app.use(morgan("combined"));
 
 appBegan = false;
 paused = false;
-bedTime = "07/11/2022 22:45:00";
+bedTime = "07/11/2022 22:20:00";
 totalTimeLeft = totalTimeTillFinish(bedTime);
 initTasks = [];
 currentTask = 0;
@@ -34,7 +34,6 @@ baseTasks = [
 
 function getStatus() {
   task = newBrowser();
-  console.log("getStatus: ", task);
   return { paused: paused, currentTask: task };
 }
 
@@ -56,7 +55,7 @@ function splitTaskTime() {
       initTasks.push({
         task: task.task,
         endTime: 0,
-        startTime: Math.floor(taskStartTime) - 1,
+        startTime: Math.floor(taskStartTime),
       });
     } else if (index === baseTasks.length - 1) {
       taskStartTime = task.percentage * timeLeft;
@@ -72,7 +71,7 @@ function splitTaskTime() {
       initTasks.push({
         task: task.task,
         endTime: loopy,
-        startTime: Math.floor(taskStartTime + loopy) - 1,
+        startTime: Math.floor(taskStartTime + loopy),
       });
 
       loopy = Math.floor(loopy + taskStartTime);
@@ -83,15 +82,17 @@ function splitTaskTime() {
 function newBrowser() {
   toReturn = { nothing: 0 };
   currentTimeLeft = totalTimeTillFinish(bedTime);
+  console.log("currentTimeLeft: ", currentTimeLeft);
   initTasks.forEach((task, index) => {
     if (currentTimeLeft < initTasks[index].endTime) {
       initTasks.splice(index, 1);
     }
   });
+  console.log("inittasks: ", initTasks);
 
   initTasks.forEach((task, index) => {
     if (
-      currentTimeLeft >= initTasks[index].endTime &&
+      currentTimeLeft > initTasks[index].endTime &&
       currentTimeLeft <= initTasks[index].startTime
     ) {
       taskTime = currentTimeLeft - initTasks[index].endTime;
@@ -99,10 +100,14 @@ function newBrowser() {
       toReturn = { task: taskName, time: taskTime };
     }
   });
+  console.log("inittasks2: ", initTasks);
+
+  console.log("toReturn: ", toReturn);
   return toReturn;
 }
 
 app.get("/getRoutine", (req, res) => {
+  console.log("Appbegun? ", appBegan);
   if (appBegan == false) {
     appBegan = true;
     splitTaskTime();
@@ -117,7 +122,11 @@ app.get("/getRoutine", (req, res) => {
 app.get("/start", (req, res) => {
   paused = false;
   splitTaskTime();
-  return getStatus();
+  x = getStatus();
+  res.json({
+    paused: x.paused,
+    currentTask: x.currentTask,
+  });
 });
 
 app.get("/pause", (req, res) => {
@@ -162,8 +171,7 @@ app.get("/pause", (req, res) => {
     baseTasks[index].percentage = newPercentAllocation;
   });
 
-  paused = true;
-  return { paused: true };
+  res.json({ paused: true });
 });
 
 // starting the server
