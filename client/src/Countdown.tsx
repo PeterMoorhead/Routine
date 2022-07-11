@@ -1,17 +1,14 @@
 import React, { useEffect, useState } from "react";
 
-// interface TimeState {
-//   time: { h: number; m: number; s: number };
-//   seconds: number;
-// }
-
 interface countDownProps {
   time: number;
   task: string;
+  pause: (counter: number) => void;
+  start: () => void;
+  paused: boolean;
 }
 
 function secondsToTime(secs: number) {
-  console.log("secondsToTime: ", secs);
   let hours = Math.floor(secs / (60 * 60));
 
   let divisor_for_minutes = secs % (60 * 60);
@@ -28,23 +25,34 @@ function secondsToTime(secs: number) {
   return obj;
 }
 
-const Countdown = ({ time, task }: countDownProps) => {
-  console.log("f time: ", time);
-  const [counter, setCounter] = useState(time);
-  console.log("counter1: ", counter);
+const Countdown = ({ time, task, paused, pause, start }: countDownProps) => {
+  const [counter, setCounter] = useState(0);
+
   useEffect(() => {
-    if (counter === 0) {
-      setCounter(time);
-    }
     setTimeout(() => {
       setCounter(counter - 1);
     }, 1000);
+  }, [paused]);
+
+  useEffect(() => {
+    if (paused) {
+      setCounter(counter);
+      return;
+    }
+    if (counter === 0) {
+      console.log("paused2: ", paused);
+      setCounter(time);
+    }
+    setTimeout(() => {
+      console.log("paused3: ", paused);
+      setCounter(counter - 1);
+    }, 1000);
   }, [counter]);
-  console.log("counter2: ", counter);
-  console.log("task: ", task);
-  console.log("time: ", time);
+
   return (
     <div>
+      {paused && <button onClick={() => start()}>Start</button>}
+      {!paused && <button onClick={() => pause(counter)}>Pause</button>}
       <div>Task: {task}</div>
       <div>H: {secondsToTime(counter).h}</div>
       <div>M: {secondsToTime(counter).m}</div>

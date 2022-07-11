@@ -20,7 +20,7 @@ app.use(morgan("combined"));
 
 appBegan = false;
 paused = false;
-bedTime = "07/09/2022 22:45:00";
+bedTime = "07/11/2022 22:45:00";
 totalTimeLeft = totalTimeTillFinish(bedTime);
 initTasks = [];
 currentTask = 0;
