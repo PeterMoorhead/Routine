@@ -18,9 +18,16 @@ app.use(cors());
 // adding morgan to log HTTP requests
 app.use(morgan("combined"));
 
+var today = new Date();
+var dd = String(today.getDate()).padStart(2, "0");
+var mm = String(today.getMonth() + 1).padStart(2, "0"); //January is 0!
+var yyyy = today.getFullYear();
+
+today = mm + "/" + dd + "/" + yyyy;
+
 appBegan = false;
 paused = false;
-bedTime = "07/11/2022 22:20:00";
+bedTime = today + " 16:30:15";
 totalTimeLeft = totalTimeTillFinish(bedTime);
 initTasks = [];
 currentTask = 0;
@@ -46,11 +53,13 @@ function totalTimeTillFinish(endtime) {
 
 function splitTaskTime() {
   timeLeft = totalTimeTillFinish(bedTime);
-
+  console.log("timeLeft", timeLeft);
   loopy = 0;
   baseTasks.forEach((task, index) => {
+    console.log("task", task);
     if (index === 0) {
       taskStartTime = task.percentage * timeLeft;
+      console.log("taskStartTime", taskStartTime);
       loopy = Math.floor(loopy + taskStartTime);
       initTasks.push({
         task: task.task,
@@ -85,10 +94,13 @@ function newBrowser() {
   console.log("currentTimeLeft: ", currentTimeLeft);
   initTasks.forEach((task, index) => {
     if (currentTimeLeft < initTasks[index].endTime) {
+      //cant do this because tasks recalculate
       initTasks.splice(index, 1);
+      // baseTasks.splice(index, 1);
     }
   });
   console.log("inittasks: ", initTasks);
+  console.log("baseTasks: ", baseTasks);
 
   initTasks.forEach((task, index) => {
     if (
@@ -120,13 +132,16 @@ app.get("/getRoutine", (req, res) => {
 });
 
 app.get("/start", (req, res) => {
-  paused = false;
-  splitTaskTime();
-  x = getStatus();
-  res.json({
-    paused: x.paused,
-    currentTask: x.currentTask,
-  });
+  if (paused) {
+    paused = false;
+    console.log("start ");
+    splitTaskTime();
+    x = getStatus();
+    res.json({
+      paused: x.paused,
+      currentTask: x.currentTask,
+    });
+  }
 });
 
 app.get("/pause", (req, res) => {
@@ -134,12 +149,11 @@ app.get("/pause", (req, res) => {
 
   timeAtPause = totalTimeTillFinish(bedTime);
 
-  taskAtPause = Object.keys(cT)[0];
-  timeLeftOfTaskAtPause = Object.values(cT)[0];
+  taskAtPause = cT.task;
+  timeLeftOfTaskAtPause = cT.time; //currently time lfet to go, 200
   console.log("cT: ", cT);
   console.log("initTasks: ", initTasks);
   console.log("taskAtPause: ", taskAtPause);
-  console.log("timeLeftOfTaskAtPause: ", timeLeftOfTaskAtPause);
 
   x = {};
 
@@ -149,29 +163,58 @@ app.get("/pause", (req, res) => {
     }
   });
 
-  fullTimeAlocated = x.startTime - x.endTime;
+  //x.startTime = 500
+  //x.endTime = 200
+  console.log("x", x);
+  fullTimeAllocated = x.startTime - x.endTime; //300
+  console.log("fullTimeAllocated", fullTimeAllocated);
 
-  timePassed = x.startTime - (x.endtime + timeLeftOfTaskAtPause);
+  console.log("x.startTime: ", x.startTime);
+  console.log("x.endTime: ", x.endTime);
+  console.log("timeLeftOfTaskAtPause: ", timeLeftOfTaskAtPause);
+  timePassed = fullTimeAllocated - timeLeftOfTaskAtPause;
+  console.log("timePassed", timePassed);
 
-  taskTimeAlreadyDonePercentage = timePassed / fullTimeAlocated;
+  taskTimeAlreadyDonePercentage = timePassed / fullTimeAllocated;
+  console.log("taskTimeAlreadyDonePercentage", taskTimeAlreadyDonePercentage); //11.5
 
   percentageLeftToDo = 1 - taskTimeAlreadyDonePercentage;
 
+  console.log("percentageLeftToDo", percentageLeftToDo); //13.5
+  p = 0;
+
   baseTasks.forEach((task, index) => {
-    percentToAdd =
-      (task.percentage * (task.percentage * taskTimeAlreadyDonePercentage)) /
-      100;
-    if (index === 0) {
-      newPercentAllocation =
-        percentToAdd + task.percentage * percentageLeftToDo;
+    console.log("task.percentage", task.percentage);
+    //you need to get the percentage of the task done of the total percentage of the task allocated, e.g ive done 23% of 25%
+    percentToAdd = task.percentage * taskTimeAlreadyDonePercentage; //2.875
+    console.log("percentToAdd", percentToAdd);
+
+    console.log("taskAtPause:", taskAtPause);
+    console.log("task.task:", task.task);
+    if (taskAtPause === task.task) {
+      // //this isnt workjng correctly
+      // y = percentageLeftToDo * task.percentage;
+      // console.log("y:", y);
+      // newPercentAllocation = percentToAdd + y; //16.375
+      // console.log("newPercentAllocation", newPercentAllocation);
     } else {
       newPercentAllocation = percentToAdd + task.percentage;
+      p = p + newPercentAllocation;
     }
 
+    initTasks = [];
     baseTasks[index].percentage = newPercentAllocation;
   });
 
-  res.json({ paused: true });
+  baseTasks.forEach((task, index) => {
+    if (task.task == taskAtPause) {
+      baseTasks[index].percentage = 1 - p;
+    }
+  });
+
+  console.log("baseTasks at pause: ", baseTasks);
+  paused = true;
+  res.json({ paused: paused });
 });
 
 // starting the server

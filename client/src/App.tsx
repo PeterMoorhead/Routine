@@ -34,6 +34,7 @@ function App() {
   const startData = async () => {
     const result = await fetch("/start");
     const json = await result.json();
+    console.log("start: ", json);
     setData({
       paused: json.paused,
       currentTask: json.currentTask,
@@ -42,11 +43,6 @@ function App() {
   };
 
   const pause = (): void => {
-    setData({
-      paused: true,
-      currentTask: { ...data.currentTask },
-      loading: false,
-    });
     pauseData();
   };
 
