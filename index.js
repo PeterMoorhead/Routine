@@ -27,7 +27,7 @@ today = mm + "/" + dd + "/" + yyyy;
 
 appBegan = false;
 paused = false;
-bedTime = today + " 19:15:00";
+bedTime = today + " 19:25:00";
 totalTimeLeft = totalTimeTillFinish(bedTime);
 initTasks = [];
 currentTask = 0;
@@ -157,10 +157,18 @@ app.get("/pause", (req, res) => {
 
   initTasks.forEach((task, index) => {
     if (timeAtPause < initTasks[index].endTime) {
-      //cant do this because tasks recalculate
-      initTasks.splice(index, 1);
-      // baseTasks.splice(index, 1);
+      baseTasks.splice(index, 1);
     }
+  });
+
+  l = 0;
+  baseTasks.forEach((task) => {
+    l = l + task.percentage;
+  });
+  split = 1 - l;
+  test = split / baseTasks.length;
+  baseTasks.forEach((task) => {
+    task.percentage = task.percentage + test;
   });
 
   fullTimeAllocated = x.startTime - x.endTime; //300
