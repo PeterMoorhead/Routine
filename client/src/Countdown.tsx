@@ -25,6 +25,7 @@ function secondsToTime(secs: number) {
 
 const Countdown = ({ time, task, taskFinished }: countDownProps) => {
   const [counter, setCounter] = useState(time);
+  const wat = () => setCounter(counter - 1);
 
   useEffect(() => {
     console.log("counter: ", counter);
@@ -32,15 +33,18 @@ const Countdown = ({ time, task, taskFinished }: countDownProps) => {
     if (counter === 0) {
       taskFinished();
     } else {
-      setTimeout(() => {
-        setCounter(counter - 1);
-      }, 1000);
+      const timeout = setTimeout(wat, 1000);
+      return () => clearTimeout(timeout);
     }
   }, [counter]);
 
   useEffect(() => {
     setCounter(time);
   }, [task]);
+
+  useEffect(() => {
+    setCounter(time);
+  }, [time]);
 
   return (
     <div>
