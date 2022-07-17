@@ -31,6 +31,16 @@ function App() {
     setData({ ...data, paused: json.paused });
   };
 
+  const skipData = async () => {
+    const result = await fetch("/skip");
+    const json = await result.json();
+    setData({
+      paused: json.paused,
+      currentTask: json.currentTask,
+      loading: false,
+    });
+  };
+
   const startData = async () => {
     const result = await fetch("/start");
     const json = await result.json();
@@ -44,6 +54,10 @@ function App() {
 
   const pause = (): void => {
     pauseData();
+  };
+
+  const skip = (): void => {
+    skipData();
   };
 
   const start = (): void => {
@@ -74,6 +88,7 @@ function App() {
           <div>
             {data.paused && <button onClick={() => start()}>Start</button>}
             {!data.paused && <button onClick={() => pause()}>Pause</button>}
+            {<button onClick={() => skip()}>Skip</button>}
             <h3>{data.currentTask.task}</h3>
             {data.paused ? (
               <p>Paused</p>

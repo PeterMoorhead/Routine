@@ -27,7 +27,7 @@ today = mm + "/" + dd + "/" + yyyy;
 
 appBegan = false;
 paused = false;
-bedTime = today + " 19:25:00";
+bedTime = today + " 21:45:00";
 totalTimeLeft = totalTimeTillFinish(bedTime);
 initTasks = [];
 currentTask = 0;
@@ -137,6 +137,48 @@ app.get("/start", (req, res) => {
       currentTask: x.currentTask,
     });
   }
+});
+
+app.get("/skip", (req, res) => {
+  currentTimeLeft = totalTimeTillFinish(bedTime);
+
+  skippedTask = {};
+  initTasks.forEach((task, index) => {
+    if (
+      currentTimeLeft > initTasks[index].endTime &&
+      currentTimeLeft <= initTasks[index].startTime
+    ) {
+      skippedTask = task;
+    }
+  });
+
+  skippedTaskPercentage = 0; //0.05
+  remainingTaskTotalPercentage = 0; //0.95
+  baseTasks.forEach((task) => {
+    if (task.task === skippedTask.task) {
+      skippedTaskPercentage = task.percentage;
+    } else {
+      remainingTaskTotalPercentage =
+        remainingTaskTotalPercentage + task.percentage;
+    }
+  });
+
+  baseTasks.forEach((task, index) => {
+    if (task.task === skippedTask.task) {
+      baseTasks.splice(index, 1);
+    } else {
+      x = task.percentage / remainingTaskTotalPercentage;
+      task.percentage = task.percentage + x * skippedTaskPercentage;
+    }
+  });
+
+  initTasks = [];
+  splitTaskTime();
+  x = getStatus();
+  res.json({
+    paused: x.paused,
+    currentTask: x.currentTask,
+  });
 });
 
 app.get("/pause", (req, res) => {
